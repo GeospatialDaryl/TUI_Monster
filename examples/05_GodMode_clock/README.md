@@ -1,39 +1,48 @@
-# Example 05: GodMode Clock
+# Example 05 – GodMode Clock
 
-The GodMode clock turns the tame live clock into an interdimensional spectacle.
-It layers rotating unicode glyph wheels, animated color palettes, and live time
-tracking to mirror the dramatic aesthetic aspirations behind XMR_Godmode.
+The GodMode clock is the flamboyant sibling of the live clock tutorial. It keeps
+track of the current wall-clock time while orchestrating animated color palettes
+and glyph constellations inspired by the `XMR_Godmode` briefing. The goal is to
+show how the `pyTuiMonster` runtime can power a maximalist TUI with rotating
+styling, unicode diversity, and runtime controls.
 
-## Concepts introduced
+## New Concepts
 
-- Managing multiple color palettes and gracefully degrading when the terminal
-  lacks color support.
-- Cycling through curated unicode character sets that reference diverse
-  historical and cultural alphabets.
-- Combining state toggles (`bling`, auto palette cycling) with status messaging
-  to keep the user oriented while experimenting.
-- Centering text and composing symmetrical decorative bands to mimic the visual
-  polish of tools like `btop` and `btopper`.
+* **Color choreography** – Uses a lifecycle hook to initialize multiple curses
+  color pairs, then cycles them each frame or by user request.
+* **Unicode glyph palettes** – Demonstrates how to rotate through historical,
+  cultural, and emoji-based characters while keeping the layout responsive.
+* **Runtime controls** – Adds keyboard bindings for toggling animation modes,
+  switching glyph sets, and tuning the refresh cadence in real time.
 
-## Controls
-
-| Key | Action |
-| --- | ------ |
-| `c` | Cycle to the next color palette. |
-| `g` | Rotate to the next unicode glyph set. |
-| `b` | Toggle the animated glyph halo on and off. |
-| `a` | Enable or disable automatic color palette cycling. |
-| `h` | Show a quick reminder of the control scheme. |
-| `q` | Quit the application. |
-
-## Running the example
-
-From the project root, execute:
+## Running the Demo
 
 ```bash
-python examples/05_GodMode_clock/main.py
+python3 main.py
 ```
 
-If your terminal supports color, you will see the palette rotate every few
-frames. Even without color support the glyph halo and status readouts remain,
-providing a maximalist monochrome rendition.
+Make sure you execute the command inside `examples/05_GodMode_clock/`. Press `q`
+to quit at any time.
+
+## Keyboard Shortcuts
+
+| Keys | Action |
+| ---- | ------ |
+| `c` | Toggle automatic color rotation. |
+| `[` / `]` | Step backward/forward through the color palette. |
+| `g` | Toggle automatic glyph rotation. |
+| `{` / `}` | Cycle through the themed glyph constellations. |
+| `+` / `-` | Speed up or slow down the refresh cadence. |
+| `r` | Reset all animation settings to their defaults. |
+| `q` | Exit the application. |
+
+## Design Notes
+
+* The example starts from the live clock template and layers on additional state
+  for colors, glyph selection, and animation pacing.
+* Glyph sets pull from box-drawing runes, futhark characters, East Asian
+  numerals, and emoji to emphasize unicode breadth.
+* The draw routine keeps a generous border and centered messaging so the clock
+  resembles a "dragon wizard" dashboard rather than a minimal ticker.
+* Status messaging doubles as feedback when users disable automation or tweak
+  palettes, keeping the tutorial approachable despite the extra flair.

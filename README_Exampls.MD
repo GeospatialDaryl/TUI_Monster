@@ -12,7 +12,7 @@ subfolder under `examples/` with runnable code and accompanying documentation.
 | 2 | `examples/02_live_clock/` | Updating state over time with the `update()` hook and `TuiConfig`. |
 | 3 | `examples/03_counter/` | Handling keyboard input via the `@key_binding` decorator. |
 | 4 | `examples/04_task_tracker/` | Combining navigation, lifecycle hooks, and styling. |
-| 5 | `examples/05_GodMode_clock/` | Maximalist unicode clock with palette control and bling toggles. |
+| 5 | `examples/05_GodMode_clock/` | Maximalist glyph and color choreography built atop the clock. |
 
 To run any example, execute the corresponding `main.py` file with Python 3. Press
 `q` to exit unless otherwise noted.
@@ -29,9 +29,8 @@ To run any example, execute the corresponding `main.py` file with Python 3. Pres
 4. **Task Tracker** pulls the previous concepts together to build a multi-line
    interface with navigation, toggling, lifecycle messaging, and dynamic
    collections.
-5. **GodMode Clock** returns to the timepiece motif but adds layered unicode
-   ornamentation, color palette choreography, and state toggles for managing the
-   spectacle.
+5. **GodMode Clock** revisits the clock and layers on unicode glyph palettes,
+   color choreography, and runtime configuration controls for maximal bling.
 
 Follow the sequence in order for the smoothest learning experience.
 
@@ -59,6 +58,6 @@ suite.
    stand-alone class requested for the refactor.
 10. Adopted decorator-driven input handling in later lessons so the examples
     mirror the modernized API surface area.
-11. Expanded the curriculum with a GodMode clock that channels the XMR monitoring
-    aesthetic, spotlighting unicode variety and color choreography for advanced
-    styling scenarios.
+11. Added a fifth "GodMode" tutorial that channels the XMR briefing by
+    showcasing animated palettes, unicode diversity, and runtime tuning atop the
+    clock foundation.

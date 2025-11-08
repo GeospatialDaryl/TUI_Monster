@@ -10,7 +10,8 @@ keeping the lifecycle patterns familiar to teams accustomed to btopper.
 - **pyTuiMonster runtime** – standalone package providing the event loop,
   configuration dataclass, and registration decorators.
 - **Tutorial curriculum** – progressive examples under `examples/` that teach
-  the runtime from hello world through interactive task management.
+  the runtime from hello world through interactive task management and a
+  dragon-wizard "GodMode" clock dripping with unicode bling.
 - **Training insights** – the `training/` directory documents investigations
   such as the ongoing XMR_Godmode analysis.
 

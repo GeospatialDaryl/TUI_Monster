@@ -1,189 +1,260 @@
-"""GodMode clock example celebrating maximalist unicode bling."""
+"""Mythic GodMode clock showcasing color and glyph choreography."""
 
 from __future__ import annotations
 
+import curses
 from datetime import datetime
 import sys
 from pathlib import Path
-from typing import List, Optional, Sequence, Tuple
-
-import curses
+from typing import List
 
 CURRENT_DIR = Path(__file__).resolve().parent
 PROJECT_ROOT = CURRENT_DIR.parent.parent
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
-from pyTuiMonster import (
-    TuiConfig,
-    TuiMonsterApp,
-    key_binding,
-    lifecycle_hook,
-)
-
-Palette = Tuple[str, Tuple[int, int], Tuple[int, int]]
-CharacterSet = Tuple[str, Sequence[str]]
-
-PALETTES: List[Palette] = [
-    ("Obsidian Prism", (curses.COLOR_CYAN, -1), (curses.COLOR_MAGENTA, -1)),
-    ("Solar Forge", (curses.COLOR_YELLOW, curses.COLOR_RED), (curses.COLOR_WHITE, curses.COLOR_RED)),
-    ("Deep Space", (curses.COLOR_BLUE, -1), (curses.COLOR_WHITE, -1)),
-    ("Verdant Runes", (curses.COLOR_GREEN, -1), (curses.COLOR_BLACK, curses.COLOR_GREEN)),
-    ("Aether Sparks", (curses.COLOR_MAGENTA, curses.COLOR_BLACK), (curses.COLOR_CYAN, curses.COLOR_BLACK)),
-]
-
-CHARSET_LIBRARY: List[CharacterSet] = [
-    ("Braille Pulses", list("⠁⠃⠇⠏⠟⠿⡿⣿")),
-    ("Box Glyph Array", list("┌┐└┘├┤┬┴┼─━│┃╱╲╳")),
-    ("Katakana Stream", list("ｱｲｳｴｵｶｷｸｹｺｻｼｽｾｿﾀﾁﾂﾃﾄ")),
-    ("Runic Wheel", list("ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛏᛒᛖᛗᛚᛟᛞ")),
-    ("Alchemy Sigils", list("🜁🜂🜃🜄🜇🜍🜔🜕🜖🜚🜛🜜🜝")),
-    ("Astrology Orbit", list("♈♉♊♋♌♍♎♏♐♑♒♓")),
-    ("Mahjong Winds", list("🀀🀁🀂🀃🀄🀅🀆🀇🀈🀉🀊🀋🀌🀍🀎🀏")),
-]
+from pyTuiMonster import TuiConfig, TuiMonsterApp, key_binding, lifecycle_hook
 
 
-class GodModeClockTUI(TuiMonsterApp):
-    """Showcase a rotating unicode clock with color palettes and glyph wheels."""
+class GodModeClock(TuiMonsterApp):
+    """Render a rotating, colorized clock with swappable glyph palettes."""
 
     def __init__(self) -> None:
-        super().__init__(TuiConfig(refresh_rate=0.15))
+        super().__init__(TuiConfig(refresh_rate=0.25))
         self.current_time: str = ""
-        self.palette_index = 0
-        self.charset_index = 0
-        self.bling_enabled = True
-        self.auto_cycle_colors = True
-        self.status = "Spooling interdimensional glyphs..."
-        self._glyph_offset = 0
-        self._frame = 0
-        self._supports_color = False
-        self._palette_pairs: List[Tuple[int, int]] = []
+        self.tick: int = 0
+        self.rotate_colors = True
+        self.rotate_glyphs = True
+        self.glyph_set_index = 0
+        self.glyph_phase = 0
+        self.color_index = 0
+        self.status_message = "Summoning dragon wizard clock..."
+        self._color_pairs: List[int] = []
+
+        self.glyph_sets = [
+            {
+                "name": "Mythic Brass",  # box-drawing with celestial runes
+                "corners": ("╔", "╗", "╚", "╝"),
+                "horizontal": "═",
+                "vertical": "║",
+                "ring": list("◇◆◈◉◎✧✦✩"),
+                "accent": ["⚚", "☿", "☽", "☾"],
+            },
+            {
+                "name": "Runic Storm",
+                "corners": ("ᚠ", "ᚦ", "ᚨ", "ᚱ"),
+                "horizontal": "ᛜ",
+                "vertical": "ᛞ",
+                "ring": list("ᚠᚡᚢᚣᚤᚥᚦᚧ"),
+                "accent": ["ᚨ", "ᛇ", "ᛟ", "ᛞ"],
+            },
+            {
+                "name": "Silk Pavilion",  # East Asian inspired strokes
+                "corners": ("╭", "╮", "╰", "╯"),
+                "horizontal": "─",
+                "vertical": "│",
+                "ring": list("一二三四五六七八九十"),
+                "accent": ["龍", "雲", "星", "火"],
+            },
+            {
+                "name": "Astral Glyphics",  # emoji + symbols mashup
+                "corners": ("✦", "✧", "✩", "✪"),
+                "horizontal": "✶",
+                "vertical": "✶",
+                "ring": list("☄️⭐🌟✨💫🪐🔮⚡"),
+                "accent": ["🐉", "🧙", "🌌", "🜂"],
+            },
+        ]
+
+        self.color_palette = [
+            (curses.COLOR_CYAN, -1),
+            (curses.COLOR_MAGENTA, -1),
+            (curses.COLOR_BLUE, -1),
+            (curses.COLOR_GREEN, -1),
+            (curses.COLOR_YELLOW, -1),
+            (curses.COLOR_RED, -1),
+        ]
 
     @lifecycle_hook("after_start")
-    def _initialize_colors(self) -> None:
-        self._supports_color = curses.has_colors()
-        if not self._supports_color:
-            self.status = "Terminal lacks color support; falling back to monochrome."
+    def _init_colors(self) -> None:
+        if not curses.has_colors():
+            self.status_message = "Terminal lacks color support; falling back to monochrome."
             return
 
         curses.start_color()
-        try:
-            curses.use_default_colors()
-        except curses.error:
-            pass
-
-        self._palette_pairs.clear()
-        for idx, (_, primary, accent) in enumerate(PALETTES):
-            primary_id = idx * 2 + 1
-            accent_id = primary_id + 1
+        curses.use_default_colors()
+        self._color_pairs.clear()
+        for index, (fg, bg) in enumerate(self.color_palette, start=1):
             try:
-                curses.init_pair(primary_id, primary[0], primary[1])
-                curses.init_pair(accent_id, accent[0], accent[1])
+                curses.init_pair(index, fg, bg)
+                self._color_pairs.append(curses.color_pair(index))
             except curses.error:
-                # Fallback to default colors if initialization fails.
-                curses.init_pair(primary_id, curses.COLOR_WHITE, curses.COLOR_BLACK)
-                curses.init_pair(accent_id, curses.COLOR_CYAN, curses.COLOR_BLACK)
-            self._palette_pairs.append((primary_id, accent_id))
+                continue
 
-        self.status = "GodMode clock online. Press 'h' for help."
+        if not self._color_pairs:
+            self.status_message = "Color initialization failed; running in monochrome."
+        else:
+            self.status_message = "GodMode clock online."
 
     def update(self) -> None:
         self.current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        glyphs = CHARSET_LIBRARY[self.charset_index][1]
-        if glyphs and self.bling_enabled:
-            self._glyph_offset = (self._glyph_offset + 1) % len(glyphs)
-        self._frame += 1
-        if (
-            self.auto_cycle_colors
-            and self._supports_color
-            and self._palette_pairs
-            and self._frame % 12 == 0
-        ):
-            self.palette_index = (self.palette_index + 1) % len(self._palette_pairs)
+        self.tick += 1
+
+        if self.rotate_colors and self._color_pairs:
+            self.color_index = (self.color_index + 1) % len(self._color_pairs)
+
+        active_ring = self.glyph_sets[self.glyph_set_index]["ring"]
+        if self.rotate_glyphs and active_ring:
+            self.glyph_phase = (self.glyph_phase + 1) % len(active_ring)
 
     def draw(self) -> None:
         self.clear()
-        screen = self.screen
-        height, width = screen.getmaxyx()
-        title = "XMR GodMode Chronomancer"
-        self._write_centered(0, title, self._attr(curses.A_BOLD))
 
-        # Compose the glyph halo.
-        glyph_name, glyphs = CHARSET_LIBRARY[self.charset_index]
-        halo_span = max(10, min(width - 4, len(glyphs) * 2)) if glyphs else 0
-        if halo_span and self.bling_enabled:
-            halo = "".join(
-                glyphs[(self._glyph_offset + idx) % len(glyphs)]
-                for idx in range(halo_span)
-            )
-            self._write_centered(2, halo, self._attr())
-            self._write_centered(4, halo[::-1], self._attr(accent=True))
-        else:
-            self._write_centered(3, "(bling disabled)", self._attr(curses.A_DIM))
+        try:
+            height, width = self.screen.getmaxyx()
+        except curses.error:
+            height, width = 0, 0
 
-        # Render the clock body.
-        time_line = f"⏱  {self.current_time}"
-        self._write_centered(6, time_line, self._attr(curses.A_BOLD))
-        palette_name = PALETTES[self.palette_index][0]
-        palette_line = f"Palette: {palette_name}"
-        charset_line = f"Glyph set: {glyph_name}"
-        self._write_centered(8, palette_line, self._attr())
-        self._write_centered(9, charset_line, self._attr(accent=True))
+        if height < 10 or width < 40:
+            self.addstr(0, 0, "Expand the window for the GodMode clock spectacle!")
+            self.refresh()
+            return
 
-        # Status and controls.
-        controls = "[c]olor  [g]lyphs  [b]ling  [a]uto  [h]elp  [q]uit"
-        self._write_centered(height - 3, controls, self._attr(curses.A_DIM))
-        status_line = self.status
-        self._write_centered(height - 2, status_line, self._attr())
+        attr = curses.A_BOLD
+        if self._color_pairs:
+            attr |= self._color_pairs[self.color_index]
+
+        glyphs = self.glyph_sets[self.glyph_set_index]
+        corners = glyphs["corners"]
+        horizontal = glyphs["horizontal"]
+        vertical = glyphs["vertical"]
+        ring = glyphs["ring"]
+        accent = glyphs["accent"]
+
+        inner_width = width - 2
+        top_fill = self._cycle_string(horizontal, ring, inner_width)
+        bottom_fill = self._cycle_string(horizontal, list(reversed(ring)), inner_width)
+
+        self.addstr(0, 0, corners[0] + top_fill + corners[1], attr)
+        self.addstr(height - 1, 0, corners[2] + bottom_fill + corners[3], attr)
+
+        for row in range(1, height - 1):
+            interior = self._cycle_string(" ", ring, inner_width)
+            line = f"{vertical}{interior}{vertical}"
+            self.addstr(row, 0, line, attr)
+
+        title = "XMR GodMode Dragon Wizard Clock"
+        self._center_text(2, title, attr)
+        self._center_text(4, self.current_time, attr | curses.A_BLINK if hasattr(curses, "A_BLINK") else attr)
+
+        glyph_label = f"Glyphs: {glyphs['name']}"
+        color_mode = "Auto" if self.rotate_colors else "Manual"
+        glyph_mode = "Auto" if self.rotate_glyphs else "Manual"
+        info_lines = [
+            f"Color mode: {color_mode} | Glyph mode: {glyph_mode}",
+            f"Palette index: {self.color_index + 1 if self._color_pairs else 0}/{len(self._color_pairs) or '—'}",
+            f"Refresh rate: {self.config.refresh_rate:.2f}s",
+            f"Status: {self.status_message}",
+        ]
+
+        for offset, text in enumerate([glyph_label, *info_lines]):
+            self.addstr(6 + offset, 2, text[: inner_width])
+
+        controls = [
+            "Controls:",
+            "  c – toggle color rotation",
+            "  [ / ] – step palette backward/forward",
+            "  g – toggle glyph rotation",
+            "  { / } – cycle glyph sets backward/forward",
+            "  + / - – adjust refresh rate",
+            "  r – reset choreography",
+            "  q – exit",
+        ]
+        for offset, text in enumerate(controls):
+            self.addstr(6 + len(info_lines) + 2 + offset, 2, text[: inner_width])
+
+        accent_char = accent[(self.tick // 5) % len(accent)] if accent else "*"
+        signature = f"{accent_char} Embrace the bling {accent_char}"
+        self._center_text(height - 3, signature, attr)
 
         self.refresh()
 
-    def _write_centered(self, y: int, text: str, attr: Optional[int]) -> None:
-        screen = self.screen
-        height, width = screen.getmaxyx()
-        if y < 0 or y >= height:
-            return
-        x = max(0, (width - len(text)) // 2)
-        self.addstr(y, x, text, attr)
+    def _center_text(self, row: int, text: str, attr: int) -> None:
+        height, width = self.screen.getmaxyx()
+        x = max(1, (width - len(text)) // 2)
+        self.addstr(row, x, text[: width - 2], attr)
 
-    def _attr(self, base: int = 0, *, accent: bool = False) -> int | None:
-        attr = base
-        if self._supports_color and self._palette_pairs:
-            pair = self._palette_pairs[self.palette_index][1 if accent else 0]
-            attr |= curses.color_pair(pair)
-        return attr or None
+    def _cycle_string(self, fallback: str, ring: List[str], length: int) -> str:
+        if length <= 0:
+            return ""
+        if not ring:
+            return fallback * length
+        return "".join(ring[(self.glyph_phase + i) % len(ring)] for i in range(length))
 
     @key_binding(ord("c"))
-    def cycle_palette(self, _: int) -> None:
-        if not self._supports_color or not self._palette_pairs:
-            self.status = "Color cycling unavailable in this terminal."
-            return
-        self.palette_index = (self.palette_index + 1) % len(self._palette_pairs)
-        self.status = f"Palette set to {PALETTES[self.palette_index][0]}"
+    def toggle_color_rotation(self, _: int) -> None:
+        self.rotate_colors = not self.rotate_colors
+        mode = "auto" if self.rotate_colors else "manual"
+        self.status_message = f"Color rotation set to {mode}."
 
     @key_binding(ord("g"))
-    def cycle_charset(self, _: int) -> None:
-        self.charset_index = (self.charset_index + 1) % len(CHARSET_LIBRARY)
-        self.status = f"Glyph wheel set to {CHARSET_LIBRARY[self.charset_index][0]}"
+    def toggle_glyph_rotation(self, _: int) -> None:
+        self.rotate_glyphs = not self.rotate_glyphs
+        mode = "auto" if self.rotate_glyphs else "manual"
+        self.status_message = f"Glyph rotation set to {mode}."
 
-    @key_binding(ord("b"))
-    def toggle_bling(self, _: int) -> None:
-        self.bling_enabled = not self.bling_enabled
-        state = "enabled" if self.bling_enabled else "paused"
-        self.status = f"Bling {state}."
+    @key_binding(ord("["))
+    def previous_color(self, _: int) -> None:
+        if not self._color_pairs:
+            self.status_message = "No color palette available."
+            return
+        self.rotate_colors = False
+        self.color_index = (self.color_index - 1) % len(self._color_pairs)
+        self.status_message = "Stepped to previous color palette entry."
 
-    @key_binding(ord("a"))
-    def toggle_auto_cycle(self, _: int) -> None:
-        self.auto_cycle_colors = not self.auto_cycle_colors
-        state = "on" if self.auto_cycle_colors else "off"
-        self.status = f"Auto palette cycling {state}."
+    @key_binding(ord("]"))
+    def next_color(self, _: int) -> None:
+        if not self._color_pairs:
+            self.status_message = "No color palette available."
+            return
+        self.rotate_colors = False
+        self.color_index = (self.color_index + 1) % len(self._color_pairs)
+        self.status_message = "Stepped to next color palette entry."
 
-    @key_binding(ord("h"))
-    def show_help(self, _: int) -> None:
-        self.status = (
-            "Use c/g/b/a to control the chromatic dragon clock. Press q to exit."
-        )
+    @key_binding(ord("{"))
+    def previous_glyph_set(self, _: int) -> None:
+        self.rotate_glyphs = False
+        self.glyph_set_index = (self.glyph_set_index - 1) % len(self.glyph_sets)
+        self.glyph_phase = 0
+        self.status_message = "Selected previous glyph constellation."
+
+    @key_binding(ord("}"))
+    def next_glyph_set(self, _: int) -> None:
+        self.rotate_glyphs = False
+        self.glyph_set_index = (self.glyph_set_index + 1) % len(self.glyph_sets)
+        self.glyph_phase = 0
+        self.status_message = "Selected next glyph constellation."
+
+    @key_binding(ord("+"))
+    def increase_speed(self, _: int) -> None:
+        self.config.refresh_rate = max(0.05, self.config.refresh_rate - 0.05)
+        self.status_message = "Increased animation tempo."
+
+    @key_binding(ord("-"))
+    def decrease_speed(self, _: int) -> None:
+        self.config.refresh_rate = min(1.0, self.config.refresh_rate + 0.05)
+        self.status_message = "Decreased animation tempo."
+
+    @key_binding(ord("r"))
+    def reset(self, _: int) -> None:
+        self.rotate_colors = True
+        self.rotate_glyphs = True
+        self.color_index = 0
+        self.glyph_set_index = 0
+        self.glyph_phase = 0
+        self.config.refresh_rate = 0.25
+        self.status_message = "Choreography reset to defaults."
 
 
 if __name__ == "__main__":
-    GodModeClockTUI().run()
+    GodModeClock().run()
