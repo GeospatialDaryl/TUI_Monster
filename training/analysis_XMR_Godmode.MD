@@ -27,7 +27,7 @@ Although direct verification awaits source availability, the following character
 - **Time-series synthesis**: Calculates derived metrics (e.g., rate-of-change, z-scores, moving averages) to enrich the raw feeds before presentation.
 - **Formatting engine**: Renders structured output—possibly in columns or panels—highlighting deltas, trend direction, and timestamp metadata.
 - **Resilience safeguards**: Graceful handling of missing files, stale timestamps, or non-numeric content, falling back to last-known-good values and recording warnings.
-- **Integration hooks**: Exposes functions or signals that other local tooling (including TUIs such as `SimpleTUI`) can consume for visualization.
+- **Integration hooks**: Exposes functions or signals that other local tooling (including TUIs built on `pyTuiMonster.TuiMonsterApp`) can consume for visualization.
 
 ## Risks, Constraints, and Validation Needs
 - **Data freshness guarantees**: The script must validate modification times to avoid decisions based on stale feeds, especially when upstream collectors stall.

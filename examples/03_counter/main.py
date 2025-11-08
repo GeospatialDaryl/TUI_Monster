@@ -1,39 +1,30 @@
 """Counter example showcasing key handling."""
 
-import curses
-
 import sys
 from pathlib import Path
+
+import curses
 
 CURRENT_DIR = Path(__file__).resolve().parent
 PROJECT_ROOT = CURRENT_DIR.parent.parent
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
-from simple_tui import SimpleTUI
+from pyTuiMonster import TuiConfig, TuiMonsterApp, key_binding
 
 
-class CounterTUI(SimpleTUI):
+class CounterTUI(TuiMonsterApp):
     """Use keyboard input to increment or decrement a counter."""
 
     def __init__(self) -> None:
-        super().__init__(refresh_rate=0.1)
+        super().__init__(TuiConfig(refresh_rate=0.1))
         self.count = 0
 
-    def on_start(self) -> None:
-        self.register_handlers(
-            {
-                ord("+"): self.increment,
-                ord("="): self.increment,
-                ord("-"): self.decrement,
-                curses.KEY_UP: self.increment,
-                curses.KEY_DOWN: self.decrement,
-            }
-        )
-
+    @key_binding(ord("+"), ord("="), curses.KEY_UP)
     def increment(self, _: int) -> None:
         self.count += 1
 
+    @key_binding(ord("-"), curses.KEY_DOWN)
     def decrement(self, _: int) -> None:
         self.count -= 1
 

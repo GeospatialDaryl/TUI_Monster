@@ -10,14 +10,14 @@ PROJECT_ROOT = CURRENT_DIR.parent.parent
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
-from simple_tui import SimpleTUI
+from pyTuiMonster import TuiConfig, TuiMonsterApp
 
 
-class LiveClockTUI(SimpleTUI):
+class LiveClockTUI(TuiMonsterApp):
     """Render the current time and refresh every frame."""
 
     def __init__(self) -> None:
-        super().__init__(refresh_rate=0.5)
+        super().__init__(TuiConfig(refresh_rate=0.5))
         self.current_time: str = ""
 
     def update(self) -> None:

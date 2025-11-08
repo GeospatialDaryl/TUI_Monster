@@ -1,4 +1,4 @@
-"""Minimal hello world example using SimpleTUI."""
+"""Minimal hello world example using :class:`pyTuiMonster.TuiMonsterApp`."""
 
 import sys
 from pathlib import Path
@@ -8,10 +8,10 @@ PROJECT_ROOT = CURRENT_DIR.parent.parent
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
-from simple_tui import SimpleTUI
+from pyTuiMonster import TuiMonsterApp
 
 
-class HelloWorldTUI(SimpleTUI):
+class HelloWorldTUI(TuiMonsterApp):
     """Render a static greeting to introduce the framework."""
 
     def draw(self) -> None:

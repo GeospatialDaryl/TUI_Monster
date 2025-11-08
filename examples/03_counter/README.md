@@ -1,12 +1,12 @@
 # Example 03: Interactive Counter
 
-The third step introduces keyboard interaction by registering key handlers in
-`on_start()`. Users can increment or decrement the counter using multiple key
-bindings.
+The third step introduces keyboard interaction by decorating handler methods
+with `@key_binding`. Users can increment or decrement the counter using multiple
+key bindings without manual registration code in `on_start()`.
 
 Concepts introduced:
 
-- Registering handlers with `register_handlers()`.
+- Decorating handlers with `@key_binding` to associate keys with methods.
 - Responding to alphanumeric and arrow keys.
 - Maintaining mutable state (`self.count`) across frames.
 

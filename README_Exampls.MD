@@ -1,32 +1,33 @@
 # TUI Monster Examples
 
-This directory contains a progressive tour through the `SimpleTUI` helper
-class. Each example lives in its own subfolder under `examples/` with runnable
-code and accompanying documentation.
+This directory contains a progressive tour through the standalone
+`pyTuiMonster.TuiMonsterApp` helper class. Each example lives in its own
+subfolder under `examples/` with runnable code and accompanying documentation.
 
 ## Structure Overview
 
 | Stage | Folder | Focus |
 | ----- | ------ | ----- |
 | 1 | `examples/01_hello_world/` | Rendering static content and refreshing the screen. |
-| 2 | `examples/02_live_clock/` | Updating state over time with the `update()` hook. |
-| 3 | `examples/03_counter/` | Handling keyboard input and mutating application state. |
-| 4 | `examples/04_task_tracker/` | Combining navigation, stateful lists, and styling. |
+| 2 | `examples/02_live_clock/` | Updating state over time with the `update()` hook and `TuiConfig`. |
+| 3 | `examples/03_counter/` | Handling keyboard input via the `@key_binding` decorator. |
+| 4 | `examples/04_task_tracker/` | Combining navigation, lifecycle hooks, and styling. |
 
 To run any example, execute the corresponding `main.py` file with Python 3. Press
 `q` to exit unless otherwise noted.
 
 ## Tutorial Progression
 
-1. **Hello World** introduces the absolute minimum required to start drawing with
-   `SimpleTUI`. You learn how to subclass, override `draw()`, and refresh the
-   buffer.
+1. **Hello World** introduces the absolute minimum required to start drawing
+   with `TuiMonsterApp`. You learn how to subclass, override `draw()`, and
+   refresh the buffer.
 2. **Live Clock** adds periodic updates and demonstrates how to control the
    refresh cadence while keeping the interface responsive.
-3. **Interactive Counter** unlocks user input, showing how to register key
-   handlers and maintain mutable state across frames.
+3. **Interactive Counter** unlocks user input, showing how to attach keys to
+   methods declaratively with `@key_binding` while maintaining mutable state.
 4. **Task Tracker** pulls the previous concepts together to build a multi-line
-   interface with navigation, toggling, and dynamic collections.
+   interface with navigation, toggling, lifecycle messaging, and dynamic
+   collections.
 
 Follow the sequence in order for the smoothest learning experience.
 
@@ -50,3 +51,7 @@ suite.
    needing separate input handling tutorials at this stage.
 8. Documented keyboard shortcuts explicitly in each README to reduce confusion
    when experimenting in the terminal.
+9. Migrated the curriculum to the `pyTuiMonster` package to demonstrate the
+   stand-alone class requested for the refactor.
+10. Adopted decorator-driven input handling in later lessons so the examples
+    mirror the modernized API surface area.
