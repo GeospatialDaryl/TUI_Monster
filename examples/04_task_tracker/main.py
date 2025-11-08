@@ -4,6 +4,14 @@ import curses
 from dataclasses import dataclass
 from typing import List
 
+import sys
+from pathlib import Path
+
+CURRENT_DIR = Path(__file__).resolve().parent
+PROJECT_ROOT = CURRENT_DIR.parent.parent
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(PROJECT_ROOT))
+
 from simple_tui import SimpleTUI
 
 
