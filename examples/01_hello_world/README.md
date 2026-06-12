@@ -13,7 +13,7 @@ curriculum from one small app:
 Run the preview with:
 
 ```bash
-python examples/01_hello_world/main.py
+python3 examples/01_hello_world/main.py
 ```
 
 Controls:

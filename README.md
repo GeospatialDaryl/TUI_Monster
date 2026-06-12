@@ -21,15 +21,16 @@ Refer to `pyTuiMonster/README.md` for detailed runtime guidance and to
 ## Development
 
 The project is packaged with `pyproject.toml` and can be installed in editable
-mode when working locally:
+mode when working locally. Use `python3` on systems that do not provide a
+`python` executable:
 
 ```bash
-python -m pip install -e .
+python3 -m pip install -e .
 ```
 
 Recommended validation before submitting changes:
 
 ```bash
-python -m compileall -q pyTuiMonster simple_tui.py examples tests
-python -m pytest -q
+python3 -m compileall -q pyTuiMonster simple_tui.py examples tests
+python3 -m pytest -q
 ```

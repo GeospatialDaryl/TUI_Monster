@@ -13,7 +13,7 @@ Concepts introduced:
 Run the example with:
 
 ```bash
-python examples/02_live_clock/main.py
+python3 examples/02_live_clock/main.py
 ```
 
 Press `q` to exit.

@@ -13,7 +13,7 @@ Concepts introduced:
 Run the example with:
 
 ```bash
-python examples/03_counter/main.py
+python3 examples/03_counter/main.py
 ```
 
 Use `+` / `-` (or arrow keys) to change the value and `q` to exit.

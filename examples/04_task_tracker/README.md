@@ -15,7 +15,7 @@ Concepts introduced:
 Run the example with:
 
 ```bash
-python examples/04_task_tracker/main.py
+python3 examples/04_task_tracker/main.py
 ```
 
 Navigation shortcuts:
