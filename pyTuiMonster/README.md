@@ -2,8 +2,8 @@
 
 This package delivers the standalone runtime requested for TUI_Monster. It wraps
 curses session management, lifecycle hooks, and keyboard routing into a single
-extensible class while preserving the ergonomic flow inspired by the `btopper`
-reference implementation.
+extensible class while preserving the ergonomic flow inspired by
+[btop++](https://github.com/aristocratos/btop).
 
 ## Module Layout
 

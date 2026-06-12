@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import curses
-import time
 import unicodedata
 from abc import ABC, abstractmethod
 from types import MappingProxyType
@@ -15,24 +14,27 @@ from .decorators import ALL_LIFECYCLE_STAGES, LifecycleStage
 KeyHandler = Callable[[int], None]
 
 
-def _display_width(text: str) -> int:
-    """Return the approximate terminal cell width for ``text``.
+def _char_width(char: str) -> int:
+    """Return the approximate terminal cell width for a single character.
 
     The standard library does not expose wcwidth, but accounting for combining
     marks and East Asian wide/full-width characters is a practical improvement
     over ``len`` for curses layouts that include emoji, CJK, and other glyphs.
     """
 
-    width = 0
-    for char in text:
-        if unicodedata.combining(char):
-            continue
-        width += 2 if unicodedata.east_asian_width(char) in {"F", "W"} else 1
-    return width
+    if unicodedata.combining(char):
+        return 0
+    return 2 if unicodedata.east_asian_width(char) in {"F", "W"} else 1
+
+
+def _display_width(text: str) -> int:
+    """Return the approximate terminal cell width for ``text``."""
+
+    return sum(_char_width(char) for char in text)
 
 
 class TuiMonsterApp(ABC):
-    """A modernized curses application harness inspired by btopper."""
+    """A modernized curses application harness inspired by btop++."""
 
     _declared_key_bindings: ClassVar[Dict[int, str]] = {}
     _declared_hooks: ClassVar[Dict[LifecycleStage, tuple[str, ...]]] = {}
@@ -105,10 +107,21 @@ class TuiMonsterApp(ABC):
         self._running = False
 
     def register_key_handler(self, key: int, handler: KeyHandler) -> None:
+        """Register ``handler`` for ``key`` at runtime.
+
+        Keys listed in :attr:`TuiConfig.stop_keys` are checked before
+        registered handlers, so registering a handler for a configured stop
+        key has no effect while that key remains a stop key. A handler may
+        raise :class:`StopIteration` to stop the application.
+        """
+
+        if not isinstance(key, int):
+            raise TypeError("key handler keys must be integers")
         self._key_handlers[key] = handler
 
     def register_key_handlers(self, handlers: Mapping[int, KeyHandler]) -> None:
-        self._key_handlers.update(handlers)
+        for key, handler in handlers.items():
+            self.register_key_handler(key, handler)
 
     @abstractmethod
     def draw(self) -> None:
@@ -161,15 +174,18 @@ class TuiMonsterApp(ABC):
             return False
         return True
 
+    @property
+    def _frame_timeout_ms(self) -> int:
+        return max(int(self.config.refresh_rate * 1000), 0)
+
     def _main(self, stdscr: curses.window) -> None:
         self._stdscr = stdscr
         try:
             curses.curs_set(0)
         except curses.error:
             pass
-        stdscr.nodelay(True)
         stdscr.keypad(True)
-        stdscr.timeout(0)
+        stdscr.timeout(self._frame_timeout_ms)
 
         self._running = True
         self._run_stage("before_start")
@@ -187,9 +203,6 @@ class TuiMonsterApp(ABC):
                 self._run_stage("before_draw")
                 self.draw()
                 self._run_stage("after_draw")
-
-                if self.config.refresh_rate > 0:
-                    time.sleep(self.config.refresh_rate)
         finally:
             self._run_stage("before_stop")
             self.on_stop()
@@ -202,25 +215,42 @@ class TuiMonsterApp(ABC):
             getattr(self, name)()
 
     def _process_input(self) -> None:
+        """Handle pending input, waiting up to one frame interval.
+
+        The first ``getch`` call blocks for at most ``config.refresh_rate``
+        seconds and paces the main loop, so a keypress wakes the loop
+        immediately instead of waiting out a sleep. Any further buffered keys
+        are drained without waiting. With a ``refresh_rate`` of ``0`` the
+        read never blocks and the loop runs as fast as possible.
+        """
+
         if self._stdscr is None:
             return
-        while self._running:
-            try:
-                key = self._stdscr.getch()
-            except curses.error:
-                return
-            if key == -1:
-                return
-            if key in self.config.stop_keys:
-                self.stop()
-                return
-            handler = self._key_handlers.get(key)
-            if handler is not None:
+        draining = False
+        try:
+            while self._running:
                 try:
-                    handler(key)
-                except StopIteration:
+                    key = self._stdscr.getch()
+                except curses.error:
+                    return
+                if not draining:
+                    self._stdscr.timeout(0)
+                    draining = True
+                if key == -1:
+                    return
+                if key in self.config.stop_keys:
                     self.stop()
                     return
+                handler = self._key_handlers.get(key)
+                if handler is not None:
+                    try:
+                        handler(key)
+                    except StopIteration:
+                        self.stop()
+                        return
+        finally:
+            if draining and self._stdscr is not None:
+                self._stdscr.timeout(self._frame_timeout_ms)
 
     def _truncate_to_width(self, text: str, max_width: int) -> str:
         if max_width <= 0:
@@ -228,10 +258,7 @@ class TuiMonsterApp(ABC):
         width = 0
         chars: list[str] = []
         for char in text:
-            if unicodedata.combining(char):
-                chars.append(char)
-                continue
-            char_width = 2 if unicodedata.east_asian_width(char) in {"F", "W"} else 1
+            char_width = _char_width(char)
             if width + char_width > max_width:
                 break
             chars.append(char)

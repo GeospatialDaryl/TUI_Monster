@@ -13,7 +13,7 @@ interface responsive.
 - Managing multiple concurrent animation timers (palette rotation, glyph set
   cycling, swirl offsets) inside `update()` using `time.monotonic()`.
 - Centering dynamic text and drawing symmetrical halos of Unicode characters to
-  mimic the glowing gauges of the original btop/btopper UI.
+  mimic the glowing gauges of the original btop++ UI.
 - Exposing rich runtime controls through key bindings so operators can dial the
   "bling" up or down in real time.
 
@@ -60,7 +60,7 @@ package can be imported. Press `q` at any time to quit.
   narrative while focusing on price monitoring aesthetics rather than mining.
 - Reused the live clock foundation to keep the learning curve gentle, adding one
   major feature per control cluster (colors, glyphs, swirl).
-- Centered all copy and halos to echo the polished layout of btop/btopper.
+- Centered all copy and halos to echo the polished layout of btop++.
 - Selected glyph sets from a variety of historical and cultural scripts to
   emphasize Unicode breadth and to encourage localization testing.
 - Bound manual palette/glyph navigation to punctuation keys so the left hand can
