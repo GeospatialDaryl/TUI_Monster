@@ -1,14 +1,14 @@
 # XMR_Godmode.sh Analysis (Stakeholder Revision)
 
 ## Executive Summary
-- The `training/XMR_Godmode.sh` script is still absent from the repository checkout, so the source could not be reviewed directly. All observations below synthesize the stakeholder-provided requirements and inferred behavior patterns for the tool.
+- The `training/XMR_Godmode.sh` script is now present in the repository and can be reviewed directly as a shell launcher around the external `crypto_monkey` Python engine.
 - Updated guidance clarifies that **XMR_Godmode is a real-time Monero (XMR) market intelligence harness**, not a mining orchestrator. It aggregates multiple locally produced data streams to support monitoring, alerting, and situational awareness workflows.
 - Data producers populate canonical single-value text files under `~/DataField/XMR_Data/`, each file named after the metric it carries (e.g., `spot_price_usd.txt`, `hash_rate.txt`). XMR_Godmode is expected to poll, normalize, and present this lattice of metrics cohesively.
 
 ## Discovery Attempts
-1. Verified repository status via `git status -sb`; the working tree remains clean, indicating the script itself is not part of the current branch.
-2. Re-ran `find . -name "XMR_Godmode.sh"` (repo scope) and `find /workspace -name "XMR_Godmode.sh"` (container scope); both confirmed the source is unavailable in this environment.
-3. Maintained `training/` as the home for investigation notes so that once the script lands, the analysis can be iteratively refined.
+1. Verified that `training/XMR_Godmode.sh` is present and acts as a Bash wrapper around `python -m crypto_monkey.cli`.
+2. Confirmed that the launcher requires a local/importable `crypto_monkey` package and maps high-level modes to CLI subcommands before handing off execution.
+3. Maintained `training/` as the home for investigation notes so the analysis can evolve as the external Python engine becomes available for review.
 
 ## Probable Design Motivation
 - **Centralized situational dashboard**: Consolidate disparate analytical feeds (spot price, order book pressure, volatility bands, on-chain signals, correlation indices) into a single console for operators who already maintain local collectors.
@@ -22,12 +22,11 @@
 - **Historical capture hooks**: Optionally append readings to rolling logs for later statistical analysis or visualization.
 
 ## Inferred Implementation Characteristics
-Although direct verification awaits source availability, the following characteristics align with the stated design intent:
-- **Modular polling loop**: Iterates over a configured manifest of metric files within `~/DataField/XMR_Data/`, reading and parsing single-value payloads (likely newline-delimited floats or integers).
-- **Time-series synthesis**: Calculates derived metrics (e.g., rate-of-change, z-scores, moving averages) to enrich the raw feeds before presentation.
-- **Formatting engine**: Renders structured output—possibly in columns or panels—highlighting deltas, trend direction, and timestamp metadata.
-- **Resilience safeguards**: Graceful handling of missing files, stale timestamps, or non-numeric content, falling back to last-known-good values and recording warnings.
-- **Integration hooks**: Exposes functions or signals that other local tooling (including TUIs built on `pyTuiMonster.TuiMonsterApp`) can consume for visualization.
+The shell source confirms the launcher behavior, while the market-analysis implementation remains inside the external `crypto_monkey` package:
+- **Launcher validation**: Checks that the selected Python executable exists and that `crypto_monkey` is importable before running the TUI engine.
+- **Mode dispatch**: Maps friendly modes (`ionizer`, `indicator`, `btop`, `simple`, `sma`) to `crypto_monkey.cli` subcommands.
+- **Terminal wrapper**: Handles banner rendering, cursor visibility, color reset, and cleanup traps before delegating to Python.
+- **External engine boundary**: Polling, calculations, alerting, and market-data normalization should be reviewed in `crypto_monkey` once that package is available.
 
 ## Risks, Constraints, and Validation Needs
 - **Data freshness guarantees**: The script must validate modification times to avoid decisions based on stale feeds, especially when upstream collectors stall.
@@ -36,11 +35,11 @@ Although direct verification awaits source availability, the following character
 - **Operational transparency**: Logging should make it easy to audit which metrics were ingested, skipped, or transformed during each polling cycle.
 
 ## Recommended Next Steps
-1. **Acquire the source**: Ensure `training/XMR_Godmode.sh` is committed or otherwise provided so reviewers can confirm these inferred behaviors.
+1. **Acquire the Python engine source**: Ensure the `crypto_monkey` package is available for review alongside this launcher.
 2. **Document the metric schema**: Publish a manifest describing expected filenames, units, and production cadence for every feed under `~/DataField/XMR_Data/`.
 3. **Codify validation rules**: Implement and document safeguards for missing/stale files, parse errors, and threshold breaches.
 4. **Design extensibility points**: Define how new metrics (e.g., liquidity indices, funding rates) can be registered without modifying core logic.
-5. **Plan integration testing**: Once the script is available, craft replayable test fixtures that emulate the file layout and exercise the polling loop under normal and failure conditions.
+5. **Plan integration testing**: Craft replayable fixtures that exercise the launcher and the Python polling loop under normal and failure conditions.
 
 ## Appendix: Investigation Log
 - `2025-11-08 06:54 UTC` – Ran `git status -sb`; confirmed clean working tree, no `XMR_Godmode.sh` present.
@@ -48,3 +47,4 @@ Although direct verification awaits source availability, the following character
 - `2025-11-08 06:56 UTC` – Executed `find /workspace -name "XMR_Godmode.sh"`; no match in container filesystem.
 - `2025-11-08 07:15 UTC` – Received stakeholder clarification that the script targets real-time market analysis, not mining control; analysis revised accordingly.
 - `2025-11-08 07:16 UTC` – Updated this memo to align with clarified requirements and outline appropriate follow-up actions.
+- `2026-06-12 UTC` – Refreshed this memo after confirming that `training/XMR_Godmode.sh` is present as a launcher for the external `crypto_monkey` engine.

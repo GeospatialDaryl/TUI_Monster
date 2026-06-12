@@ -8,7 +8,7 @@ subfolder under `examples/` with runnable code and accompanying documentation.
 
 | Stage | Folder | Focus |
 | ----- | ------ | ----- |
-| 1 | `examples/01_hello_world/` | Rendering static content and refreshing the screen. |
+| 1 | `examples/01_hello_world/` | Previewing every tutorial mode from a single hello-world launcher. |
 | 2 | `examples/02_live_clock/` | Updating state over time with the `update()` hook and `TuiConfig`. |
 | 3 | `examples/03_counter/` | Handling keyboard input via the `@key_binding` decorator. |
 | 4 | `examples/04_task_tracker/` | Combining navigation, lifecycle hooks, and styling. |
@@ -19,9 +19,9 @@ To run any example, execute the corresponding `main.py` file with Python 3. Pres
 
 ## Tutorial Progression
 
-1. **Hello World** introduces the absolute minimum required to start drawing
-   with `TuiMonsterApp`. You learn how to subclass, override `draw()`, and
-   refresh the buffer.
+1. **Hello World Mode Preview** introduces the project with a small interactive
+   launcher that cycles through all five tutorial modes before you run the full
+   examples.
 2. **Live Clock** adds periodic updates and demonstrates how to control the
    refresh cadence while keeping the interface responsive.
 3. **Interactive Counter** unlocks user input, showing how to attach keys to
@@ -33,24 +33,26 @@ To run any example, execute the corresponding `main.py` file with Python 3. Pres
    glyph constellations, and swirl animations to mirror the maximalist feel of
    the XMR_Godmode tooling.
 
-Follow the sequence in order for the smoothest learning experience.
+Start with the Hello World mode preview for a quick tour, then follow the
+sequence in order for the smoothest learning experience.
 
 ## Appendix: Decision Log
 
 The following log records the design choices made while preparing this tutorial
 suite.
 
-1. Chose four examples to balance brevity with progressive complexity.
+1. Chose five examples to balance brevity with progressive complexity.
 2. Ordered the topics from passive rendering to fully interactive management to
    mirror common learning curves for TUI frameworks.
 3. Standardized on per-example `README.md` files to keep instructions close to
    the code they describe.
-4. Used numeric prefixes (01-04) in folder names so the filesystem mirrors the
+4. Used numeric prefixes (01-05) in folder names so the filesystem mirrors the
    tutorial order.
 5. Added a task tracker finale with navigation and list management to highlight
    how previous concepts integrate into a cohesive app.
-6. Reserved the `q` key for exiting every example to maintain consistency across
-   the suite.
+6. Reserved the `q` key for exiting every example and added `n`/`p`, arrow,
+   `Tab`, and numeric shortcuts to the Hello World preview for quick mode
+   exploration.
 7. Selected lightweight placeholder tasks and auto-generated task names to avoid
    needing separate input handling tutorials at this stage.
 8. Documented keyboard shortcuts explicitly in each README to reduce confusion
