@@ -4,24 +4,31 @@ from __future__ import annotations
 
 import curses
 import time
+import unicodedata
 from abc import ABC, abstractmethod
 from types import MappingProxyType
-from typing import Callable, ClassVar, Dict, Optional
+from typing import Callable, ClassVar, Dict, Mapping, Optional
 
 from .config import TuiConfig
-from .decorators import LifecycleStage
+from .decorators import ALL_LIFECYCLE_STAGES, LifecycleStage
 
 KeyHandler = Callable[[int], None]
-_ALL_STAGES: tuple[LifecycleStage, ...] = (
-    "before_start",
-    "after_start",
-    "before_update",
-    "after_update",
-    "before_draw",
-    "after_draw",
-    "before_stop",
-    "after_stop",
-)
+
+
+def _display_width(text: str) -> int:
+    """Return the approximate terminal cell width for ``text``.
+
+    The standard library does not expose wcwidth, but accounting for combining
+    marks and East Asian wide/full-width characters is a practical improvement
+    over ``len`` for curses layouts that include emoji, CJK, and other glyphs.
+    """
+
+    width = 0
+    for char in text:
+        if unicodedata.combining(char):
+            continue
+        width += 2 if unicodedata.east_asian_width(char) in {"F", "W"} else 1
+    return width
 
 
 class TuiMonsterApp(ABC):
@@ -32,17 +39,37 @@ class TuiMonsterApp(ABC):
 
     def __init_subclass__(cls, **kwargs):
         super().__init_subclass__(**kwargs)
-        key_bindings: Dict[int, str] = {}
-        hooks: Dict[LifecycleStage, list[str]] = {stage: [] for stage in _ALL_STAGES}
 
+        key_bindings: Dict[int, str] = {}
+        hooks: Dict[LifecycleStage, list[str]] = {stage: [] for stage in ALL_LIFECYCLE_STAGES}
+
+        for base in reversed(cls.__mro__[1:]):
+            key_bindings.update(getattr(base, "_declared_key_bindings", {}))
+            for stage, names in getattr(base, "_declared_hooks", {}).items():
+                hooks[stage].extend(name for name in names if name not in hooks[stage])
+
+        local_keys: Dict[int, str] = {}
         for name, value in cls.__dict__.items():
             keys = getattr(value, "_tui_monster_keys", None)
             if keys:
                 for key in keys:
+                    if key in local_keys:
+                        first = local_keys[key]
+                        raise ValueError(
+                            f"Duplicate key binding {key!r} on {cls.__name__}: "
+                            f"{first!r} and {name!r}"
+                        )
+                    local_keys[key] = name
                     key_bindings[key] = name
             stage = getattr(value, "_tui_monster_stage", None)
             if stage:
-                hooks[stage].append(name)
+                if stage not in ALL_LIFECYCLE_STAGES:
+                    supported = ", ".join(ALL_LIFECYCLE_STAGES)
+                    raise ValueError(
+                        f"Unsupported lifecycle stage {stage!r}; expected one of: {supported}"
+                    )
+                if name not in hooks[stage]:
+                    hooks[stage].append(name)
 
         cls._declared_key_bindings = key_bindings
         cls._declared_hooks = {
@@ -80,7 +107,7 @@ class TuiMonsterApp(ABC):
     def register_key_handler(self, key: int, handler: KeyHandler) -> None:
         self._key_handlers[key] = handler
 
-    def register_key_handlers(self, handlers: Dict[int, KeyHandler]) -> None:
+    def register_key_handlers(self, handlers: Mapping[int, KeyHandler]) -> None:
         self._key_handlers.update(handlers)
 
     @abstractmethod
@@ -105,17 +132,41 @@ class TuiMonsterApp(ABC):
             self._stdscr.noutrefresh()
             curses.doupdate()
 
-    def addstr(self, y: int, x: int, text: str, attr: Optional[int] = None) -> None:
+    def addstr(self, y: int, x: int, text: str, attr: Optional[int] = None) -> bool:
+        """Safely add text to the screen.
+
+        Returns ``True`` when text was written and ``False`` when the screen is
+        unavailable, the coordinates are outside the current terminal bounds, or
+        curses rejects the write. Silent failure mirrors the previous no-op
+        behavior while preventing narrow-terminal crashes.
+        """
+
         if self._stdscr is None:
-            return
-        if attr is None:
-            self._stdscr.addnstr(y, x, text, len(text))
-        else:
-            self._stdscr.addnstr(y, x, text, len(text), attr)
+            return False
+        max_y, max_x = self._stdscr.getmaxyx()
+        if y < 0 or y >= max_y or x < 0 or x >= max_x:
+            return False
+        available_width = max_x - x
+        if available_width <= 0:
+            return False
+        truncated = self._truncate_to_width(text, available_width)
+        if not truncated:
+            return False
+        try:
+            if attr is None:
+                self._stdscr.addnstr(y, x, truncated, len(truncated))
+            else:
+                self._stdscr.addnstr(y, x, truncated, len(truncated), attr)
+        except curses.error:
+            return False
+        return True
 
     def _main(self, stdscr: curses.window) -> None:
         self._stdscr = stdscr
-        curses.curs_set(0)
+        try:
+            curses.curs_set(0)
+        except curses.error:
+            pass
         stdscr.nodelay(True)
         stdscr.keypad(True)
         stdscr.timeout(0)
@@ -153,21 +204,50 @@ class TuiMonsterApp(ABC):
     def _process_input(self) -> None:
         if self._stdscr is None:
             return
-        try:
-            key = self._stdscr.getch()
-        except curses.error:
-            return
-        if key == -1:
-            return
-        if key in self.config.stop_keys:
-            self.stop()
-            return
-        handler = self._key_handlers.get(key)
-        if handler is not None:
+        while self._running:
             try:
-                handler(key)
-            except StopIteration:
+                key = self._stdscr.getch()
+            except curses.error:
+                return
+            if key == -1:
+                return
+            if key in self.config.stop_keys:
                 self.stop()
+                return
+            handler = self._key_handlers.get(key)
+            if handler is not None:
+                try:
+                    handler(key)
+                except StopIteration:
+                    self.stop()
+                    return
+
+    def _truncate_to_width(self, text: str, max_width: int) -> str:
+        if max_width <= 0:
+            return ""
+        width = 0
+        chars: list[str] = []
+        for char in text:
+            if unicodedata.combining(char):
+                chars.append(char)
+                continue
+            char_width = 2 if unicodedata.east_asian_width(char) in {"F", "W"} else 1
+            if width + char_width > max_width:
+                break
+            chars.append(char)
+            width += char_width
+        return "".join(chars)
+
+    def center_text(self, y: int, text: str, attr: Optional[int] = None) -> bool:
+        """Center text on the current screen using approximate display width."""
+
+        if self._stdscr is None:
+            return False
+        max_y, max_x = self._stdscr.getmaxyx()
+        if y < 0 or y >= max_y:
+            return False
+        x = max((max_x - _display_width(text)) // 2, 0)
+        return self.addstr(y, x, text, attr)
 
     def __repr__(self) -> str:
         return f"{self.__class__.__name__}(config={self.config!r})"
