@@ -172,11 +172,7 @@ class GodModeClockTUI(TuiMonsterApp):
         return [segment, reverse, secondary]
 
     def _center_text(self, y: int, text: str, attr: int | None) -> None:
-        max_y, max_x = self.screen.getmaxyx()
-        if y < 0 or y >= max_y:
-            return
-        x = max((max_x - len(text)) // 2, 0)
-        self.addstr(y, x, text, attr)
+        self.center_text(y, text, attr)
 
     @key_binding(ord("c"))
     def toggle_colors(self, _: int) -> None:

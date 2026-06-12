@@ -40,12 +40,12 @@ Follow the sequence in order for the smoothest learning experience.
 The following log records the design choices made while preparing this tutorial
 suite.
 
-1. Chose four examples to balance brevity with progressive complexity.
+1. Chose five examples to balance brevity with progressive complexity.
 2. Ordered the topics from passive rendering to fully interactive management to
    mirror common learning curves for TUI frameworks.
 3. Standardized on per-example `README.md` files to keep instructions close to
    the code they describe.
-4. Used numeric prefixes (01-04) in folder names so the filesystem mirrors the
+4. Used numeric prefixes (01-05) in folder names so the filesystem mirrors the
    tutorial order.
 5. Added a task tracker finale with navigation and list management to highlight
    how previous concepts integrate into a cohesive app.

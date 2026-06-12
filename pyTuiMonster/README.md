@@ -26,6 +26,10 @@ reference implementation.
   window and execution state.
 * Supports a read-only `keymap` view so applications can introspect registered
   handlers at runtime.
+* Inherits decorated key bindings and lifecycle hooks from parent app classes,
+  while rejecting duplicate key declarations within the same class.
+* Uses defensive rendering helpers that avoid common narrow-terminal curses
+  crashes and provide display-width-aware centering for Unicode-heavy screens.
 
 ### TuiConfig
 
@@ -40,10 +44,12 @@ reference implementation.
 
 * `@key_binding(*keys)` registers the decorated method as the handler for the
   given key codes. Methods still receive the raw key value, enabling custom logic
-  per key when needed.
+  per key when needed. The decorator validates that at least one integer key code
+  is supplied.
 * `@lifecycle_hook(stage)` attaches auxiliary methods to lifecycle moments such
   as `before_start`, `after_draw`, or `before_stop`. This keeps setup/teardown
   logic modular without overriding the primary hook methods unless necessary.
+  Stage names are validated at decoration time.
 
 ## Usage Pattern
 
@@ -92,7 +98,7 @@ if __name__ == "__main__":
 
 1. Add higher-level widgets (panels, tables) on top of `TuiMonsterApp` as
    mix-ins or companion classes.
-2. Document recommended testing strategies (e.g., headless rendering with
-   `curses.ascii` fixtures) to help teams validate TUIs in CI pipelines.
+2. Expand the fake-screen test suite with additional resize, Unicode-width, and
+   lifecycle failure fixtures to keep terminal behavior stable in CI pipelines.
 3. Expand the decorator catalog with abstractions for repeating timers or
    scheduled jobs as the project evolves.
