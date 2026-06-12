@@ -9,8 +9,9 @@ keeping the lifecycle patterns familiar to teams accustomed to btopper.
 
 - **pyTuiMonster runtime** – installable Python package metadata plus the event
   loop, configuration dataclass, and registration decorators.
-- **Tutorial curriculum** – progressive examples under `examples/` that teach
-  the runtime from hello world through an animated GodMode chronometer.
+- **Tutorial curriculum** – progressive examples under `examples/` that start
+  with a Hello World mode preview and continue through an animated GodMode
+  chronometer.
 - **Training insights** – the `training/` directory documents investigations
   such as the ongoing XMR_Godmode analysis.
 
