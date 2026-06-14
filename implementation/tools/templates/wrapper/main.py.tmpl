@@ -1,0 +1,33 @@
+"""{{APP_NAME}} — generated {{DATE}} by {{AUTHOR}}"""
+
+import curses
+from implementation.tools.wrap import ScriptWrapperApp, run_wrapped
+from pyTuiMonster import TuiConfig, key_binding
+
+
+COMMAND = ["echo", "Replace this command in main.py"]
+TITLE = "{{APP_NAME}}"
+
+
+class {{CLASS_NAME}}Wrapper(ScriptWrapperApp):
+    """Custom wrapper for {{APP_NAME}}."""
+
+    def __init__(self) -> None:
+        super().__init__(
+            command=COMMAND,
+            title=TITLE,
+            config=TuiConfig(refresh_rate=1 / 15),
+        )
+
+    @key_binding(ord('r'))
+    def restart(self, key: int) -> None:
+        """Restart the wrapped process."""
+        if self._proc and self._proc.poll() is None:
+            self._proc.terminate()
+        self._launch_process()
+
+
+if __name__ == "__main__":
+    app = {{CLASS_NAME}}Wrapper()
+    app.run()
+    raise SystemExit(app._exit_code or 0)

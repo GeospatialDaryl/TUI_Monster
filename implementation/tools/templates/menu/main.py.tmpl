@@ -1,0 +1,38 @@
+"""{{APP_NAME}} — generated {{DATE}} by {{AUTHOR}}"""
+
+from implementation.tools.monster_menu import MenuItem, MonsterMenuApp
+from implementation.tools.wrap import run_wrapped
+
+
+def build_menu():
+    return [
+        MenuItem(
+            label="Example Action",
+            description="Run an example command — replace with your own",
+            action=lambda: run_wrapped(["echo", "Hello from {{APP_NAME}}!"],
+                                       title="Example"),
+        ),
+        MenuItem(
+            label="Nested Menu",
+            description="An example submenu",
+            children=[
+                MenuItem(
+                    label="Sub-item A",
+                    description="First sub-item",
+                    action=lambda: run_wrapped(["echo", "Sub-item A"], title="A"),
+                ),
+                MenuItem(
+                    label="Sub-item B",
+                    description="Second sub-item",
+                    action=lambda: run_wrapped(["echo", "Sub-item B"], title="B"),
+                ),
+            ],
+        ),
+    ]
+
+
+if __name__ == "__main__":
+    MonsterMenuApp(
+        title="{{APP_NAME}}",
+        menu_items=build_menu(),
+    ).run()

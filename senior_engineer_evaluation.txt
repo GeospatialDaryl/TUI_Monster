@@ -1,5 +1,26 @@
 # Senior Engineer codebase evaluation — machine-readable YAML
 # This .txt file contains a valid YAML document beginning at the `---` marker.
+#
+# Resolution status (updated 2026-06-13, branch: senior-eng-upgrades)
+# All findings from the original 2026-06-11 evaluation have been addressed
+# except F9 (package naming). The one remaining open item:
+#
+#   F9 (Low) — pyTuiMonster violates PEP 8 lowercase package naming.
+#              Likely intentional at this point; rename before any public release.
+#
+# Finding resolution summary:
+#   F1  High   Vendored btopper/ source tree        FIXED — deleted; upstream link added
+#   F2  High   No LICENSE file                      FIXED — MIT LICENSE added
+#   F3  High   No CI; dev deps not declared          FIXED — ci.yml + pyproject.toml [dev]
+#   F4  Med    Zip blob, stray btop/ and ~workspace/ FIXED — removed (workspace gitignored)
+#   F5  Med    Unrunnable XMR tool in training/      FIXED — training/README.md labels as non-functional
+#   F6  Med    Event loop busy-spin / time.sleep     FIXED — stdscr.timeout() paces loop; no sleep
+#   F7  Low    Duplicated display-width logic        FIXED — shared _char_width() helper
+#   F8  Low    Inconsistent decorator vs runtime     FIXED — register_key_handler validates int keys;
+#              validation                                    StopIteration convention documented
+#   F9  Low    pyTuiMonster violates PEP 8 naming    OPEN  — intentional; revisit before public release
+#   F10 Low    ELIF.MD drift + citation artifacts    FIXED — counts corrected, artifacts removed, btop/ ref gone
+#   F11 Info   Event loop untested                   FIXED — test_main_runs_full_lifecycle_and_tears_down added
 ---
 report:
   title: "Senior Engineer Evaluation: TUI_Monster"

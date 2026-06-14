@@ -12,11 +12,17 @@ lifecycle patterns inspired by [btop++](https://github.com/aristocratos/btop).
 - **Tutorial curriculum** – progressive examples under `examples/` that start
   with a Hello World mode preview and continue through an animated GodMode
   chronometer.
+- **Implementation kit** – `implementation/` contains practical tooling:
+  `tools/wrap.py` wraps any shell command in a streaming TUI,
+  `tools/scaffold.py` generates new project skeletons, and
+  `tools/monster_menu.py` provides an Armbian-style menu launcher.
+  MkDocs documentation and advanced dev examples live there too.
 - **Training notes** – the `training/` directory holds non-functional design
   notes such as the XMR_Godmode investigation (see `training/README.md`).
 
-Refer to `pyTuiMonster/README.md` for detailed runtime guidance and to
-`README_Examples.md` for the example syllabus.
+Refer to `pyTuiMonster/README.md` for detailed runtime guidance,
+`README_Examples.md` for the example syllabus, and
+`implementation/README.md` for the tooling kit.
 
 ## Development
 

@@ -1,0 +1,47 @@
+/* TUI Monster docs — extra styles */
+
+:root {
+  --tm-orange: #ff6d00;
+  --tm-amber: #ff8f00;
+  --tm-terminal-bg: #1a1a2e;
+  --tm-terminal-fg: #e8e8e8;
+}
+
+/* Terminal code blocks feel more like a real terminal */
+.highlight pre,
+.language-text pre,
+.language-console pre {
+  background-color: var(--tm-terminal-bg) !important;
+  color: var(--tm-terminal-fg);
+  border-left: 3px solid var(--tm-orange);
+}
+
+/* Key binding badges */
+.keys kbd {
+  font-family: monospace;
+  font-size: 0.85em;
+  padding: 2px 6px;
+  border: 1px solid #666;
+  border-radius: 3px;
+  background: #2d2d2d;
+  color: #e0e0e0;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.5);
+}
+
+/* API method signatures */
+.md-typeset .doc-heading {
+  font-family: monospace;
+  font-size: 1em;
+}
+
+/* Lifecycle stage labels */
+.lifecycle-badge {
+  display: inline-block;
+  padding: 1px 8px;
+  border-radius: 12px;
+  font-size: 0.78em;
+  font-weight: 600;
+  font-family: monospace;
+  background: var(--tm-orange);
+  color: #fff;
+}
