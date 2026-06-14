@@ -162,6 +162,71 @@ def test_center_text_uses_screen_width() -> None:
     assert screen.writes[-1] == (1, 3, "abcd", None)
 
 
+def test_register_key_handler_rejects_non_integer_keys() -> None:
+    app = MinimalApp()
+    with pytest.raises(TypeError, match="integers"):
+        app.register_key_handler("x", lambda key: None)  # type: ignore[arg-type]
+    with pytest.raises(TypeError, match="integers"):
+        app.register_key_handlers({"x": lambda key: None})  # type: ignore[dict-item]
+
+
+def test_process_input_restores_frame_timeout_after_draining() -> None:
+    app = MinimalApp(TuiConfig(refresh_rate=0.05))
+    screen = FakeScreen([ord("a")])
+    app._stdscr = screen  # type: ignore[assignment]
+    app._running = True
+
+    app._process_input()
+
+    assert screen.timeout_value == 50
+
+
+def test_main_runs_full_lifecycle_and_tears_down() -> None:
+    events: list[str] = []
+
+    class LoopApp(TuiMonsterApp):
+        def __init__(self) -> None:
+            super().__init__(TuiConfig(refresh_rate=0, stop_keys=(ord("q"),)))
+
+        def on_start(self) -> None:
+            events.append("on_start")
+
+        @lifecycle_hook("after_start")
+        def started(self) -> None:
+            events.append("after_start")
+
+        @lifecycle_hook("before_update")
+        def preparing(self) -> None:
+            events.append("before_update")
+
+        def update(self) -> None:
+            events.append("update")
+
+        def draw(self) -> None:
+            events.append("draw")
+
+        def on_stop(self) -> None:
+            events.append("on_stop")
+
+    app = LoopApp()
+    screen = FakeScreen([ord("q")])
+
+    app._main(screen)  # type: ignore[arg-type]
+
+    assert events == [
+        "on_start",
+        "after_start",
+        "before_update",
+        "update",
+        "draw",
+        "on_stop",
+    ]
+    assert app.running is False
+    assert screen.keypad_value is True
+    with pytest.raises(RuntimeError, match="not initialized"):
+        app.screen
+
+
 def test_refresh_calls_curses_doupdate(monkeypatch: pytest.MonkeyPatch) -> None:
     called = False
 

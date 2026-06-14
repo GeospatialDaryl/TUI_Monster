@@ -1,0 +1,40 @@
+"""{{APP_NAME}} — generated {{DATE}} by {{AUTHOR}}"""
+
+import curses
+from pyTuiMonster import TuiMonsterApp, TuiConfig, key_binding, lifecycle_hook
+
+
+class {{CLASS_NAME}}App(TuiMonsterApp):
+
+    def __init__(self) -> None:
+        super().__init__(TuiConfig(refresh_rate=1 / 30))
+        self._message = "Hello from {{APP_NAME}}!"
+
+    @lifecycle_hook("after_start")
+    def _setup(self) -> None:
+        curses.start_color()
+        curses.use_default_colors()
+        curses.init_pair(1, curses.COLOR_GREEN, -1)
+        curses.curs_set(0)
+
+    def update(self) -> None:
+        pass  # refresh state here
+
+    def draw(self) -> None:
+        self.clear()
+        h, w = self.screen.getmaxyx()
+        self.center_text(h // 2 - 1, self._message, curses.color_pair(1) | curses.A_BOLD)
+        self.center_text(h // 2 + 1, "press h for help  |  q to quit", curses.A_DIM)
+        self.refresh()
+
+    @key_binding(ord('h'))
+    def show_help(self, key: int) -> None:
+        self._message = "h help  |  q quit"
+
+    @key_binding(ord('r'))
+    def reset(self, key: int) -> None:
+        self._message = "Hello from {{APP_NAME}}!"
+
+
+if __name__ == "__main__":
+    {{CLASS_NAME}}App().run()

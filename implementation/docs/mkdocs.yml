@@ -1,0 +1,81 @@
+site_name: TUI Monster
+site_description: Decorator-friendly curses TUI framework for Python
+site_url: https://geospatialdaryl.github.io/TUI_Monster/
+repo_url: https://github.com/GeospatialDaryl/TUI_Monster
+repo_name: GeospatialDaryl/TUI_Monster
+
+theme:
+  name: material
+  palette:
+    - scheme: slate
+      primary: deep orange
+      accent: orange
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+    - scheme: default
+      primary: deep orange
+      accent: orange
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+  features:
+    - navigation.tabs
+    - navigation.tabs.sticky
+    - navigation.sections
+    - navigation.expand
+    - navigation.top
+    - search.highlight
+    - search.suggest
+    - content.code.copy
+    - content.code.annotate
+    - toc.follow
+  icon:
+    repo: fontawesome/brands/github
+    admonition:
+      note: octicons/tag-16
+      tip: octicons/squirrel-16
+      warning: octicons/alert-16
+
+extra_css:
+  - stylesheets/extra.css
+
+markdown_extensions:
+  - admonition
+  - pymdownx.details
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
+  - pymdownx.inlinehilite
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.tasklist:
+      custom_checkbox: true
+  - attr_list
+  - md_in_html
+  - tables
+  - toc:
+      permalink: true
+
+plugins:
+  - search:
+      lang: en
+
+nav:
+  - Home: index.md
+  - Getting Started: getting-started.md
+  - API Reference:
+      - TuiMonsterApp: api/app.md
+      - TuiConfig: api/config.md
+      - Decorators: api/decorators.md
+  - Guides:
+      - Wrapping Scripts: guides/wrapping-scripts.md
+      - Build Menu: guides/build-menu.md
+      - Scaffolding: guides/scaffolding.md
+  - Examples: examples.md

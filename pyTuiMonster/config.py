@@ -19,8 +19,10 @@ class TuiConfig:
     Parameters
     ----------
     refresh_rate:
-        Seconds between frames. Values ``<= 0`` disable sleeping between
-        iterations.
+        Seconds between frames. The interval is enforced by the curses input
+        timeout, so a keypress wakes the loop immediately. A value of ``0``
+        disables waiting entirely and the loop runs as fast as possible
+        (useful for tests, but it busy-spins a CPU core in a real terminal).
     stop_keys:
         Key codes that cause :meth:`~pyTuiMonster.app.TuiMonsterApp.stop`
         to be invoked when pressed.

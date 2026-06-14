@@ -1,0 +1,359 @@
+# Senior Engineer codebase evaluation — machine-readable YAML
+# This .txt file contains a valid YAML document beginning at the `---` marker.
+#
+# Resolution status (updated 2026-06-13, branch: senior-eng-upgrades)
+# All findings from the original 2026-06-11 evaluation have been addressed
+# except F9 (package naming). The one remaining open item:
+#
+#   F9 (Low) — pyTuiMonster violates PEP 8 lowercase package naming.
+#              Likely intentional at this point; rename before any public release.
+#
+# Finding resolution summary:
+#   F1  High   Vendored btopper/ source tree        FIXED — deleted; upstream link added
+#   F2  High   No LICENSE file                      FIXED — MIT LICENSE added
+#   F3  High   No CI; dev deps not declared          FIXED — ci.yml + pyproject.toml [dev]
+#   F4  Med    Zip blob, stray btop/ and ~workspace/ FIXED — removed (workspace gitignored)
+#   F5  Med    Unrunnable XMR tool in training/      FIXED — training/README.md labels as non-functional
+#   F6  Med    Event loop busy-spin / time.sleep     FIXED — stdscr.timeout() paces loop; no sleep
+#   F7  Low    Duplicated display-width logic        FIXED — shared _char_width() helper
+#   F8  Low    Inconsistent decorator vs runtime     FIXED — register_key_handler validates int keys;
+#              validation                                    StopIteration convention documented
+#   F9  Low    pyTuiMonster violates PEP 8 naming    OPEN  — intentional; revisit before public release
+#   F10 Low    ELIF.MD drift + citation artifacts    FIXED — counts corrected, artifacts removed, btop/ ref gone
+#   F11 Info   Event loop untested                   FIXED — test_main_runs_full_lifecycle_and_tears_down added
+---
+report:
+  title: "Senior Engineer Evaluation: TUI_Monster"
+  date: "2026-06-11"
+  evaluator: "Claude Code (acting as Senior Engineer)"
+  repository:
+    path: "/home/frodo/repos/TUI_Monster"
+    branch: "main"
+    commits: 32
+    tracked_files_total: 152
+    tracked_files_first_party: 27
+    tracked_files_vendored: 125
+    pack_size: "2.52 MiB"
+
+summary:
+  verdict: "Small, well-crafted core library wrapped in a noisy repository"
+  overall_grade: "B-"
+  one_paragraph: >
+    The first-party code (the pyTuiMonster package, ~380 lines across three
+    modules) is genuinely good: a declarative, decorator-driven curses runtime
+    with metaclass-free subclass registration, lifecycle hooks, Unicode-aware
+    rendering, input validation, and a passing 12-test suite. The repository
+    around it undermines that quality: a full vendored copy of the btop++ C++
+    source tree (125 of 152 tracked files), a 1.3 MB zip blob committed at the
+    repo root, no license, no CI, no declared dev dependencies, an unrelated
+    cryptocurrency-dashboard shell script that depends on a package that does
+    not exist in the repo, and documentation containing stale facts and
+    leftover AI-generation citation artifacts.
+
+scores:
+  # 1 (poor) to 5 (excellent)
+  architecture_and_design: 4
+  code_quality: 4
+  test_coverage_and_quality: 3
+  documentation: 3
+  repository_hygiene: 1
+  packaging_and_distribution: 2
+  ci_cd_and_automation: 1
+  security: 3
+  maintainability: 3
+
+components:
+  - name: pyTuiMonster
+    path: "pyTuiMonster/"
+    role: "Core library: curses application runtime"
+    loc_approx: 380
+    assessment: strong
+    notes:
+      - "app.py: TuiMonsterApp ABC; __init_subclass__ collects @key_binding and
+         @lifecycle_hook declarations across the MRO with inheritance and
+         duplicate-key detection (pyTuiMonster/app.py:40)"
+      - "Safe rendering: addstr() bounds-checks, truncates to display width,
+         and swallows curses.error instead of crashing on narrow terminals
+         (pyTuiMonster/app.py:135)"
+      - "Unicode display-width approximation handles combining marks and
+         East Asian wide characters (pyTuiMonster/app.py:18)"
+      - "config.py: slots dataclass with __post_init__ validation"
+      - "decorators.py: validates inputs eagerly (empty keys, non-int keys,
+         unknown lifecycle stages) with clear error messages"
+  - name: examples
+    path: "examples/"
+    role: "Tutorial curriculum, 5 progressive examples (01_hello_world through
+           05_GodMode_clock), each with a README"
+    loc_approx: 623
+    assessment: good
+    notes:
+      - "Readable, idiomatic use of the library's own API; doubles as
+         integration documentation"
+      - "Each example sys.path-hacks the project root instead of relying on
+         the installable package (examples/01_hello_world/main.py:12)"
+  - name: tests
+    path: "tests/"
+    role: "pytest suite"
+    test_count: 12
+    status: "all passing (verified 2026-06-11 in a fresh venv)"
+    assessment: adequate
+    notes:
+      - "Good FakeScreen test double; covers config validation, decorator
+         errors, binding inheritance, duplicate detection, input draining,
+         bounds/truncation, centering, refresh"
+      - "Tests reach into private API (_stdscr, _running, _run_stage,
+         _process_input) rather than testing through public seams"
+      - "No test exercises run()/_main(), the actual event loop, or
+         lifecycle-stage ordering end to end"
+  - name: btopper
+    path: "btopper/"
+    role: "Vendored full source tree of btop++ (C++ system monitor)"
+    assessment: problematic
+    notes:
+      - "125 tracked files, ~2.9 MB; cited only as 'inspiration' — never
+         built, imported, or referenced by any code"
+      - "Carries its own upstream Apache-2.0 LICENSE, README, CI configs,
+         themes, and PNG images inside this repo"
+  - name: training
+    path: "training/"
+    role: "Investigation notes plus XMR_Godmode.sh shell launcher"
+    assessment: problematic
+    notes:
+      - "XMR_Godmode.sh is a launcher for an external 'crypto_monkey' Python
+         package that exists nowhere in the repository; the script cannot run"
+      - "Well-written bash (set -euo pipefail, getopts, cleanup traps) but it
+         is a cryptocurrency market dashboard unrelated to the TUI library"
+  - name: misc_root_artifacts
+    assessment: problematic
+    notes:
+      - "btop_example: a 1.3 MB zip archive committed at the repo root with no
+         extension and no explanation"
+      - "btop/: empty directory present on disk, referenced by ELIF.MD as an
+         'upstream reference' but contains nothing"
+      - "~workspace/: untracked local directory clutter at repo root"
+      - "simple_tui.py: legacy compatibility shim, reasonable, but installed
+         as a top-level module (namespace pollution)"
+
+strengths:
+  - id: S1
+    title: "Declarative registration without metaclass magic"
+    detail: >
+      __init_subclass__ walks the MRO in reverse so subclasses inherit and
+      override parent key bindings and hooks deterministically, and duplicate
+      bindings within a class raise at class-definition time rather than at
+      runtime. This is the right pattern, executed correctly and covered by
+      tests (test_decorated_key_bindings_and_hooks_are_inherited,
+      test_duplicate_local_key_bindings_raise_error).
+  - id: S2
+    title: "Defensive curses handling"
+    detail: >
+      addstr/center_text return booleans instead of raising, bounds-check
+      against getmaxyx, truncate by display width, and tolerate curses.error —
+      the most common crash class in curses apps (resize/narrow terminals) is
+      designed out.
+  - id: S3
+    title: "Eager input validation with good error messages"
+    detail: >
+      TuiConfig, key_binding, and lifecycle_hook all fail fast with messages
+      that name the offending value and list valid alternatives.
+  - id: S4
+    title: "Consistent modern Python style"
+    detail: >
+      Type hints throughout, `from __future__ import annotations`, slots
+      dataclass, Literal-typed lifecycle stages, MappingProxyType for the
+      public keymap view, ruff configured in pyproject.toml.
+  - id: S5
+    title: "Tutorial curriculum as living documentation"
+    detail: >
+      Five progressive examples each with a local README, plus a test
+      (test_hello_world_preview.py) that pins the curriculum sequence so docs
+      and code cannot silently diverge.
+
+findings:
+  - id: F1
+    severity: high
+    category: repository_hygiene
+    title: "82% of tracked files are an unused vendored btop++ source tree"
+    location: "btopper/"
+    detail: >
+      The entire btop++ C++ project (sources, themes, images, packaging
+      configs) is committed but never built or referenced by any code path.
+      It dominates clone size, confuses license posture, drowns first-party
+      code in searches, and will rot relative to upstream.
+    recommendation: >
+      Delete btopper/ and replace with a one-line link to the upstream
+      repository (and a pinned commit hash if a specific snapshot matters).
+      If comparative study is genuinely needed, use a git submodule.
+  - id: F2
+    severity: high
+    category: legal
+    title: "No license for the first-party code"
+    location: "repo root; pyproject.toml"
+    detail: >
+      There is no LICENSE file at the root and no `license` field in
+      pyproject.toml, so pyTuiMonster is all-rights-reserved by default while
+      sitting next to a vendored Apache-2.0 project — an ambiguous and risky
+      posture for anything intended to be installed or shared.
+    recommendation: >
+      Add a root LICENSE and the corresponding `license` /
+      `license-files` metadata in pyproject.toml.
+  - id: F3
+    severity: high
+    category: ci_cd
+    title: "No CI; documented validation commands fail on a clean checkout"
+    location: ".github/ (absent); README.md"
+    detail: >
+      There are no CI workflows, and the README's recommended check
+      `python3 -m pytest -q` fails on the system interpreter because pytest is
+      not a declared dependency anywhere (no optional-dependencies group, no
+      requirements file). Verified: tests only run after manually creating a
+      venv and installing pytest.
+    recommendation: >
+      Add `[project.optional-dependencies] dev = ["pytest", "ruff"]`, document
+      the venv bootstrap in README, and add a GitHub Actions workflow running
+      compileall + ruff + pytest on the supported Python matrix (3.10-3.12).
+  - id: F4
+    severity: medium
+    category: repository_hygiene
+    title: "Binary zip blob and empty/stray directories at repo root"
+    location: "btop_example; btop/; ~workspace/"
+    detail: >
+      btop_example is a committed 1.3 MB zip archive with no file extension
+      and no documentation. btop/ is an empty directory that ELIF.MD
+      nevertheless cites as an 'upstream reference'. ~workspace/ is untracked
+      local clutter.
+    recommendation: >
+      Remove the zip from history (or at minimum from HEAD), delete btop/,
+      add ~workspace/ to .gitignore or remove it.
+  - id: F5
+    severity: medium
+    category: scope
+    title: "training/ contains an unrunnable, off-mission cryptocurrency tool"
+    location: "training/XMR_Godmode.sh; training/analysis_XMR_Godmode.MD"
+    detail: >
+      The launcher hard-depends on a `crypto_monkey` package that is not in
+      the repository or on PyPI metadata declared here, so it cannot execute.
+      The accompanying analysis memo describes monitoring infrastructure
+      (~/DataField/XMR_Data/) that also does not exist here. This is
+      aspirational scope unrelated to a curses UI library.
+    recommendation: >
+      Move XMR_Godmode material to its own repository, or clearly mark the
+      directory as non-functional design notes and exclude it from the
+      package narrative in README/ELIF.
+  - id: F6
+    severity: medium
+    category: performance
+    title: "Event loop busy-spins when refresh_rate is 0 and adds input latency otherwise"
+    location: "pyTuiMonster/app.py:180"
+    detail: >
+      With nodelay(True) and timeout(0), a refresh_rate of 0 produces a 100%
+      CPU spin loop; with the default 1/30, keypresses wait up to 33 ms in
+      time.sleep before being processed. The blocking sleep also couples frame
+      rate to input latency.
+    recommendation: >
+      Use stdscr.timeout(int(refresh_rate * 1000)) and let getch() perform the
+      frame pacing, or use curses.napms; document the refresh_rate=0 behavior.
+  - id: F7
+    severity: low
+    category: code_quality
+    title: "Duplicated display-width logic"
+    location: "pyTuiMonster/app.py:18; pyTuiMonster/app.py:225"
+    detail: >
+      _display_width and _truncate_to_width re-implement the same
+      combining-mark / east-asian-width classification; a change to one (e.g.
+      adding zero-width-joiner handling) will silently miss the other.
+    recommendation: "Extract a shared per-character width helper."
+  - id: F8
+    severity: low
+    category: api_design
+    title: "Inconsistent validation between decorator and runtime registration"
+    location: "pyTuiMonster/app.py:107"
+    detail: >
+      @key_binding validates key types and duplicates, but
+      register_key_handler/register_key_handlers accept anything and silently
+      overwrite existing bindings, including config.stop_keys collisions
+      (stop_keys win because they are checked first, which is undocumented).
+    recommendation: >
+      Validate runtime registrations the same way, and document handler
+      precedence and the StopIteration-stops-the-app convention
+      (pyTuiMonster/app.py:221), which is currently an undocumented surprise.
+  - id: F9
+    severity: low
+    category: packaging
+    title: "Package naming and legacy shim installed top-level"
+    location: "pyproject.toml:26"
+    detail: >
+      `pyTuiMonster` violates PEP 8 package naming (lowercase expected), and
+      py-modules installs `simple_tui` as a top-level module purely for
+      backwards compatibility, claiming a generic name in site-packages.
+    recommendation: >
+      Consider renaming to `pytuimonster` (or `tui_monster`) before the API is
+      public, and deprecate the simple_tui shim with a DeprecationWarning.
+  - id: F10
+    severity: low
+    category: documentation
+    title: "Documentation drift and generation artifacts"
+    location: "ELIF.MD; README_Exampls.MD"
+    detail: >
+      ELIF.MD says 'Four progressively complex tutorials' while five exist,
+      cites the empty btop/ directory as a resource, and is littered with
+      leftover AI citation markers of the form 【F:path†Lx-Ly】. The examples
+      index file is misspelled (README_Exampls.MD).
+    recommendation: >
+      Strip the citation markers, fix the counts, rename to
+      README_Examples.md, and re-verify every path ELIF.MD references.
+  - id: F11
+    severity: info
+    category: testing
+    title: "Event loop itself is untested"
+    location: "pyTuiMonster/app.py:164"
+    detail: >
+      _main() — curses setup, lifecycle stage ordering across a full
+      start/loop/stop cycle, and the finally-block teardown — has no test.
+      The existing FakeScreen double is already sufficient to drive it with a
+      monkeypatched curses.wrapper.
+    recommendation: >
+      Add one integration-style test running _main() against FakeScreen with a
+      scripted key sequence, asserting hook ordering and teardown.
+
+security:
+  posture: acceptable
+  notes:
+    - "No network, subprocess, eval/exec, or deserialization in first-party
+       Python code; attack surface is effectively terminal input only"
+    - "XMR_Godmode.sh executes an arbitrary interpreter from the PY_CMD
+       environment variable; acceptable for a personal launcher, worth noting
+       if it ever runs in a privileged context"
+    - "No secrets found in tracked files"
+
+recommendations_prioritized:
+  - priority: 1
+    action: "Add a LICENSE and license metadata (F2)"
+    effort: trivial
+  - priority: 2
+    action: "Declare dev dependencies and add CI running ruff + pytest on
+             Python 3.10-3.12 (F3)"
+    effort: small
+  - priority: 3
+    action: "Purge vendored btopper/, the btop_example zip, and empty/stray
+             directories; link upstream instead (F1, F4)"
+    effort: small
+  - priority: 4
+    action: "Relocate or clearly quarantine the XMR_Godmode material (F5)"
+    effort: small
+  - priority: 5
+    action: "Fix event-loop pacing via curses timeout instead of time.sleep
+             (F6) and add an event-loop integration test (F11)"
+    effort: medium
+  - priority: 6
+    action: "Documentation pass: fix drift, strip citation artifacts, rename
+             misspelled files (F10)"
+    effort: small
+
+verification_performed:
+  - "python3 -m compileall -q pyTuiMonster simple_tui.py examples tests -> OK"
+  - "pytest 12/12 passed in a fresh venv (system python3 lacks pytest,
+     confirming F3)"
+  - "git ls-files counts: 152 total, 125 under btopper/ (confirming F1)"
+  - "Confirmed absence of .github/, root LICENSE, and CI configuration"
+  - "Confirmed btop_example is a zip archive via file(1) and btop/ is empty"
